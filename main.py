@@ -63,7 +63,6 @@ def number_vertices(vertices):
     indices[-1, 0] = next_index
     return indices
 
-
 def make_vertex_list(vertices):
     rows, columns, _ = vertices.shape
     total_vertices = (rows - 2) * columns + 2
@@ -80,12 +79,79 @@ def make_vertex_list(vertices):
     vertex_list[-1] = vertices[-1, 0]
     return vertex_list
 
+def make_face_list(indices):
+    _, columns = indices.shape
+    rhomb_count = columns * (columns - 1)
+    triangle_count = rhomb_count * 2
+    triangles_per_row = columns * 2
+    face_list = numpy.zeros((triangle_count, 3), dtype=numpy.uint16)
+
+    # the first row of faces shares the bottom point
+    bottom_point = indices[0, 0]
+    for j in range(columns):
+        # two middle vertices of the rhombus
+        v1 = indices[1, j]
+        v2 = indices[1, (j + 1) % columns]
+        # furthest point on the rhombus
+        v3 = indices[2, j]
+        # describe the rhombus as two triangles
+        #
+        #  bottom_point
+        #     /  \
+        #   v1----v2
+        #     \  /
+        #      v3
+        face_list[2 * j] = [bottom_point, v1, v2]
+        face_list[2 * j + 1] = [v3, v2, v1]
+
+    for i in range(1, columns - 1):
+        row_offset = i * triangles_per_row
+        for j in range(columns):
+            next_column = (j + 1) % columns
+            v1 = indices[i, next_column]
+            v2 = indices[i + 1, j]
+            v3 = indices[i + 1, next_column]
+            v4 = indices[i + 2, j]
+
+            #
+            #      v1
+            #     /  \
+            #   v2----v3
+            #     \  /
+            #      v4
+            face_list[row_offset + 2 * j] = [v1, v2, v3]
+            face_list[row_offset + 2 * j + 1] = [v4, v3, v2]
+
+    # the last row of faces is similar to the first row, but the
+    # shared vertex is on the other end
+    top_point = indices[-1, 0]
+    row_offset = (columns - 2) * triangles_per_row
+    for j in range(columns):
+        next_column = (j + 1) % columns
+        v1 = indices[-3, next_column]
+        v2 = indices[-2, j]
+        v3 = indices[-2, next_column]
+
+        # rhombus looks like this:
+        #
+        #      v1
+        #     /  \
+        #   v2----v3
+        #     \  /
+        #   top_point
+        face_list[row_offset + 2 * j] = [v1, v2, v3]
+        face_list[row_offset + 2 * j + 1] = [top_point, v3, v2]
+    
+    return face_list
+
 def main(args):
     generators = make_generator_vectors(args)
     vertices = generate_vertices(generators)
     vertex_indices = number_vertices(vertices)
     vertex_list = make_vertex_list(vertices)
-    print(vertex_list)
+    face_list = make_face_list(vertex_indices)
+    print(vertex_indices)
+    print(face_list)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
