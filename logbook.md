@@ -19,3 +19,10 @@ Next Steps:
 
 * Debug vertices
 * Determine how to generate the mesh
+
+## 2021-09-24 Generated a Mesh
+
+Today I fixed the vertices and generated an OBJ mesh.
+
+For now, that's all I want to do for this project, if I want to generate
+a glTF, I'll probably open the mesh in Blender to customize it.

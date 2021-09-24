@@ -8,7 +8,7 @@ http://archive.bridgesmathart.org/2021/bridges2021-7.pdf
 import argparse
 
 import numpy
-import pymesh
+import openmesh
 
 def make_generator_vectors(args):
     pitch_angle = args.pitch_angle_degrees * numpy.pi / 180.0
@@ -17,7 +17,9 @@ def make_generator_vectors(args):
     n = args.vector_count
     generators = numpy.zeros((n, 3), dtype=numpy.float64)
     for i in range(n):
-        angle = i / n * 2.0 * numpy.pi
+        # making the angle clockwise. This is easier than reversing the
+        # winding order of all the faces since I have them backwards ^^;
+        angle = -i * 2.0 * numpy.pi / n
         generators[i, 0] = s * numpy.cos(angle)
         generators[i, 1] = s * numpy.sin(angle)
         generators[i, 2] = z
@@ -41,9 +43,9 @@ def generate_vertices(generators):
 
     # the middle n-1 layers are sums of i of the generator vectors. Indices
     # are treated cyclically
-    for i in range(n - 1):
+    for i in range(1, n):
         for j in range(n):
-            result[i, j] = cyclic_sum(generators, j, j + i)
+            result[i, j] = cyclic_sum(generators, j, j + i - 1)
 
     # the final vertex is the sum of all the generator vectors
     result[-1, 0] = numpy.sum(generators, axis=0)
@@ -150,8 +152,12 @@ def main(args):
     vertex_indices = number_vertices(vertices)
     vertex_list = make_vertex_list(vertices)
     face_list = make_face_list(vertex_indices)
-    print(vertex_indices)
-    print(face_list)
+    mesh = openmesh.TriMesh()
+    mesh.add_vertices(vertex_list)
+    mesh.add_faces(face_list)
+    mesh.request_vertex_normals()
+    mesh.update_normals()
+    openmesh.write_mesh("models/polar_zonohedron.obj", mesh)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
