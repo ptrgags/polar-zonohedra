@@ -1,6 +1,6 @@
 # Polar Zonohedra (2021)
 
-Just a simple script to generate an OBJ mesh of a polar 
+Just a simple script to generate an OBJ mesh of polar zonohedra
 
 ## Dependencies
 
